@@ -1,9 +1,10 @@
 name: Auto Tracker
+
 on:
   schedule:
     - cron: '0 */4 * * *'
   workflow_dispatch:
-job: # Hoặc jobs tùy theo file cũ của bạn
+
 jobs:
   run-bot:
     runs-on: ubuntu-latest
