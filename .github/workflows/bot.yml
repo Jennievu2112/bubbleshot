@@ -1,4 +1,4 @@
-name: Crypto Screenshot Bot
+name: Auto Tracker
 
 on:
   schedule:
@@ -13,17 +13,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          
-      # Cài đặt các gói hệ thống bắt buộc cho Puppeteer
-      - name: Install system dependencies for Puppeteer
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2
-
-      - name: Install Node dependencies
-        run: npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
-
-      - name: Run screenshot and AI analysis script
+      - name: Run script
         run: node script.js
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
