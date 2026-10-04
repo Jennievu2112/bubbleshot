@@ -1,8 +1,9 @@
 name: Auto Tracker
 on:
   schedule:
-    - cron: '0 */4 * * *' # Chạy tự động mỗi 4 tiếng
-  workflow_dispatch: # Cho phép bấm chạy thủ công
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+job: # Hoặc jobs tùy theo file cũ của bạn
 jobs:
   run-bot:
     runs-on: ubuntu-latest
@@ -11,8 +12,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
-      - run: node script.js
+      - name: Install dependencies
+        run: npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
+      - name: Run script
+        run: node script.js
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SHEET_WEBHOOK_URL: ${{ secrets.SHEET_WEBHOOK_URL }}
