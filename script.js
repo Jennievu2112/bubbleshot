@@ -1,36 +1,25 @@
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-puppeteer.use(StealthPlugin());
-
 (async () => {
   try {
-    console.log("Đang khởi động trình duyệt ẩn danh chống chặn...");
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu'
-      ]
-    });
+    console.log("Đang yêu cầu chụp ảnh trang CryptoBubbles...");
+    // Sử dụng dịch vụ screenshot công khai miễn phí để chụp trực tiếp trang web
+    const targetUrl = "https://cryptobubbles.net/en";
+    const screenshotApiUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}&screenshot=true&meta=false&embed=screenshot.url&waitFor=10000`;
     
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 1000 });
+    const apiRes = await fetch(screenshotApiUrl);
+    const apiData = await apiRes.json();
     
-    console.log("Đang truy cập trang CryptoBubbles...");
-    await page.goto('https://cryptobubbles.net/en', { waitUntil: 'networkidle2', timeout: 60000 });
+    if (!apiData.data || !apiData.data.screenshot) {
+      throw new Error("Không lấy được ảnh chụp màn hình từ dịch vụ.");
+    }
     
-    console.log("Đang chờ bong bóng hiển thị đầy đủ...");
-    await new Promise(r => setTimeout(r, 12000)); // Chờ 12 giây để trang render canvas bong bóng
+    const imageUrl = apiData.data.screenshot.url;
+    console.log("Đã chụp ảnh xong, đang tải ảnh xuống để gửi AI...");
     
-    const imageBuffer = await page.screenshot();
-    const base64Image = imageBuffer.toString('base64');
-    await browser.close();
-    console.log("Đã chụp ảnh màn hình thành công!");
+    const imgRes = await fetch(imageUrl);
+    const arrayBuffer = await imgRes.arrayBuffer();
+    const base64Image = Buffer.from(arrayBuffer).toString('base64');
 
-    console.log("Đang gửi ảnh sang Gemini AI để đọc...");
+    console.log("Đang gửi ảnh sang Gemini AI để đọc thông tin bong bóng...");
     const payload = {
       "contents": [{
         "parts": [
@@ -47,10 +36,6 @@ puppeteer.use(StealthPlugin());
     });
     
     const aiJson = await aiRes.json();
-    if (!aiJson.candidates || !aiJson.candidates[0].content) {
-      throw new Error("Lỗi phản hồi từ Gemini AI: " + JSON.stringify(aiJson));
-    }
-    
     const rawText = aiJson.candidates[0].content.parts[0].text;
     const cleanJsonStr = rawText.match(/\[.*\]/s)[0]; 
     const finalData = JSON.parse(cleanJsonStr);
@@ -62,7 +47,7 @@ puppeteer.use(StealthPlugin());
       body: JSON.stringify({ data: finalData })
     });
     
-    console.log("Đẩy dữ liệu thành công, mã trạng thái:", sheetRes.status);
+    console.log("Hoàn tất! Trạng thái đẩy Sheets:", sheetRes.status);
 
   } catch (error) {
     console.error("Lỗi tiến trình:", error);
