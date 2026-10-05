@@ -1,25 +1,21 @@
 (async () => {
   try {
-    console.log("Đang yêu cầu chụp ảnh trang CryptoBubbles...");
-    // Sử dụng dịch vụ screenshot công khai miễn phí để chụp trực tiếp trang web
+    console.log("Đang gọi dịch vụ ScreenshotOne để chụp ảnh...");
     const targetUrl = "https://cryptobubbles.net/en";
-    const screenshotApiUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}&screenshot=true&meta=false&embed=screenshot.url&waitFor=10000`;
     
-    const apiRes = await fetch(screenshotApiUrl);
-    const apiData = await apiRes.json();
+    // Sử dụng ScreenshotOne API với tham số chờ render Canvas
+    const apiKey = process.env.SCREENSHOTONE_API_KEY;
+    const screenshotUrl = `https://api.screenshotone.com/take?access_key=${apiKey}&url=${encodeURIComponent(targetUrl)}&viewport_width=1280&viewport_height=900&block_ads=true&delay=10&format=png`;
     
-    if (!apiData.data || !apiData.data.screenshot) {
-      throw new Error("Không lấy được ảnh chụp màn hình từ dịch vụ.");
+    const imgRes = await fetch(screenshotUrl);
+    if (!imgRes.ok) {
+      throw new Error("Lỗi chụp ảnh từ ScreenshotOne, mã trạng thái: " + imgRes.status);
     }
     
-    const imageUrl = apiData.data.screenshot.url;
-    console.log("Đã chụp ảnh xong, đang tải ảnh xuống để gửi AI...");
-    
-    const imgRes = await fetch(imageUrl);
     const arrayBuffer = await imgRes.arrayBuffer();
     const base64Image = Buffer.from(arrayBuffer).toString('base64');
+    console.log("Chụp ảnh thành công, đang gửi sang Gemini AI...");
 
-    console.log("Đang gửi ảnh sang Gemini AI để đọc thông tin bong bóng...");
     const payload = {
       "contents": [{
         "parts": [
@@ -47,7 +43,7 @@
       body: JSON.stringify({ data: finalData })
     });
     
-    console.log("Hoàn tất! Trạng thái đẩy Sheets:", sheetRes.status);
+    console.log("Hoàn tất! Đã đẩy dữ liệu về Sheets thành công.");
 
   } catch (error) {
     console.error("Lỗi tiến trình:", error);
